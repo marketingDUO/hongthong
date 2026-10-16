@@ -1,0 +1,70 @@
+name: Hetzner – Hong Thong
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hongthong-hetzner
+  cancel-in-progress: false
+jobs:
+  deploy:
+    name: Website übertragen und prüfen
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HETZNER_HOST: ${{ secrets.HETZNER_HOST }}
+      HETZNER_USER: ${{ secrets.HETZNER_USER }}
+      HETZNER_PORT: ${{ secrets.HETZNER_PORT }}
+      HETZNER_PASSWORD: ${{ secrets.HETZNER_PASSWORD }}
+      HETZNER_PATH: ${{ secrets.HETZNER_PATH }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Einstellungen prüfen
+        shell: bash
+        run: |
+          for key in HETZNER_HOST HETZNER_USER HETZNER_PORT HETZNER_PASSWORD; do
+            if [ -z "${!key}" ]; then echo "::error::Secret $key fehlt."; exit 1; fi
+          done
+          test -f dist/index.html
+          node --check dist/script.js
+      - name: SFTP-Werkzeug installieren
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install --yes lftp
+      - name: Website hochladen
+        shell: bash
+        run: |
+          target_dir="${HETZNER_PATH:-/}"
+          mkdir -p "$RUNNER_TEMP/hongthong-check/assets"
+          lftp -u "$HETZNER_USER","$HETZNER_PASSWORD" "sftp://$HETZNER_HOST:$HETZNER_PORT" -e "
+            set cmd:fail-exit yes;
+            set net:max-retries 2;
+            set net:timeout 20;
+            set sftp:auto-confirm yes;
+            cd \"$target_dir\";
+            mirror --reverse --verbose dist/ ./;
+            get assets/IMG_1707.webp -o \"$RUNNER_TEMP/hongthong-check/assets/IMG_1707.webp\";
+            get assets/IMG_1709.webp -o \"$RUNNER_TEMP/hongthong-check/assets/IMG_1709.webp\";
+            get assets/IMG_1712.webp -o \"$RUNNER_TEMP/hongthong-check/assets/IMG_1712.webp\";
+            get assets/IMG_1714.webp -o \"$RUNNER_TEMP/hongthong-check/assets/IMG_1714.webp\";
+            get assets/hong-thong-schwan.svg -o \"$RUNNER_TEMP/hongthong-check/assets/hong-thong-schwan.svg\";
+            get index.html -o \"$RUNNER_TEMP/hongthong-check/index.html\";
+            get script.js -o \"$RUNNER_TEMP/hongthong-check/script.js\";
+            get style.css -o \"$RUNNER_TEMP/hongthong-check/style.css\";
+            bye
+          "
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          source = Path('dist')
+          check = Path(os.environ['RUNNER_TEMP']) / 'hongthong-check'
+          for file in source.rglob('*'):
+              if file.is_file():
+                  relative = file.relative_to(source)
+                  downloaded = check / relative
+                  if not downloaded.is_file() or file.read_bytes() != downloaded.read_bytes():
+                      raise SystemExit(f'Überprüfung fehlgeschlagen: {relative}')
+          print('Alle Website-Dateien erfolgreich auf Hetzner übertragen und per Rückdownload geprüft.')
+          PY
