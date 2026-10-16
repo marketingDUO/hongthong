@@ -43,16 +43,16 @@ jobs:
             set net:max-retries 2;
             set net:timeout 20;
             set sftp:auto-confirm yes;
-            cd \"$target_dir\";
+            cd $target_dir;
             mirror --reverse --verbose dist/ ./;
-            get assets/IMG_1707.webp -o \"$RUNNER_TEMP/hongthong-check/assets/IMG_1707.webp\";
-            get assets/IMG_1709.webp -o \"$RUNNER_TEMP/hongthong-check/assets/IMG_1709.webp\";
-            get assets/IMG_1712.webp -o \"$RUNNER_TEMP/hongthong-check/assets/IMG_1712.webp\";
-            get assets/IMG_1714.webp -o \"$RUNNER_TEMP/hongthong-check/assets/IMG_1714.webp\";
-            get assets/hong-thong-schwan.svg -o \"$RUNNER_TEMP/hongthong-check/assets/hong-thong-schwan.svg\";
-            get index.html -o \"$RUNNER_TEMP/hongthong-check/index.html\";
-            get script.js -o \"$RUNNER_TEMP/hongthong-check/script.js\";
-            get style.css -o \"$RUNNER_TEMP/hongthong-check/style.css\";
+            get assets/IMG_1707.webp -o $RUNNER_TEMP/hongthong-check/assets/IMG_1707.webp;
+            get assets/IMG_1709.webp -o $RUNNER_TEMP/hongthong-check/assets/IMG_1709.webp;
+            get assets/IMG_1712.webp -o $RUNNER_TEMP/hongthong-check/assets/IMG_1712.webp;
+            get assets/IMG_1714.webp -o $RUNNER_TEMP/hongthong-check/assets/IMG_1714.webp;
+            get assets/hong-thong-schwan.svg -o $RUNNER_TEMP/hongthong-check/assets/hong-thong-schwan.svg;
+            get index.html -o $RUNNER_TEMP/hongthong-check/index.html;
+            get script.js -o $RUNNER_TEMP/hongthong-check/script.js;
+            get style.css -o $RUNNER_TEMP/hongthong-check/style.css;
             bye
           "
           python3 - <<'PY'
